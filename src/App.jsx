@@ -24,7 +24,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- OPENROUTER API KEY & CONFIG ---
-const API_KEY = import.meta.env.OPENROUTER_API_KEY;
+const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const LOGO_URL = "https://lh3.googleusercontent.com/d/1NVCS-ir_F9kwYP5Dxpfg6dSiyhhKAXD2";
 
 // DAFTAR MODEL AI DARI OPENROUTER
