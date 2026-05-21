@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useReactToPrint } from "react-to-print";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
 import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
@@ -10,13 +11,13 @@ import {
 
 // --- KONFIGURASI FIREBASE ---
 const firebaseConfig = {
-  apiKey: "AIzaSyAENW2kadJc6GydbsuUXsabKSZTdyXP8Qw",
-  authDomain: "generator-soal-2232b.firebaseapp.com",
-  projectId: "generator-soal-2232b",
-  storageBucket: "generator-soal-2232b.firebasestorage.app",
-  messagingSenderId: "860611577077",
-  appId: "1:860611577077:web:669f20d09172d8d87f31bc",
-  measurementId: "G-1NBBPGLRMM"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -25,16 +26,18 @@ const db = getFirestore(app);
 
 // --- OPENROUTER API KEY & CONFIG ---
 const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-const LOGO_URL = "https://lh3.googleusercontent.com/d/1NVCS-ir_F9kwYP5Dxpfg6dSiyhhKAXD2";
+const LOGO_URL = import.meta.env.VITE_LOGO_URL;
 
-// DAFTAR MODEL AI DARI OPENROUTER
+// DAFTAR MODEL AI FREE DARI OPENROUTER
 const OPENROUTER_MODELS = [
-  { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (Cepat & Stabil)' },
-  { id: 'google/gemini-1.5-pro', label: 'Gemini 1.5 Pro (Sangat Cerdas)' },
-  { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B (Alternatif Pintar)' },
-  { id: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B (Bagus untuk Logika)' },
-  { id: 'google/gemini-2.0-flash-exp:free', label: 'Gemini 2.0 Flash (Eksperimen Gratis)' },
-  { id: 'meta-llama/llama-3-8b-instruct:free', label: 'Llama 3 8B (Gratis Terbatas)' }
+  {
+    id: 'openai/gpt-oss-120b:free',
+    label: 'GPT OSS 120B (Free - Rekomendasi)'
+  },
+  {
+    id: 'openai/gpt-oss-20b:free',
+    label: 'GPT OSS 20B (Free - Cadangan Cepat)'
+  }
 ];
 
 // OPSI DIMENSI PROFIL LULUSAN (DPL)
@@ -140,7 +143,74 @@ function Dashboard({ user }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans">
-      <style>{`@media print { body * { visibility: hidden; } .printable-area, .printable-area * { visibility: visible; } .printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; margin: 0; } .no-print { display: none !important; } }`}</style>
+      <style>{`
+
+      @page {
+        size: A4;
+        margin: 15mm;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background: #f3f4f6;
+      }
+
+      .printable-area {
+        width: 210mm;
+        min-height: 297mm;
+        margin: auto;
+        background: white;
+        color: black;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+
+      .page-break {
+        page-break-before: always;
+      }
+
+      .avoid-break {
+        page-break-inside: avoid;
+      }
+
+      @media print {
+
+        html,
+        body {
+          background: white;
+          margin: 0;
+          padding: 0;
+        }
+
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .no-print {
+          display: none !important;
+        }
+
+        .printable-area {
+          width: 210mm;
+          padding: 15mm;
+          margin: 0 auto;
+          box-sizing: border-box;
+          background: white;
+        }
+
+        /* PERBAIKAN UTAMA: MENCABUT BATASAN LAYOUT TAILWIND AGAR BISA HALAMAN GANDA */
+        html, body, #root, .min-h-screen, main, .overflow-hidden, .overflow-y-auto {
+          height: auto !important;
+          min-height: auto !important;
+          max-height: none !important;
+          overflow: visible !important;
+          position: static !important;
+          display: block !important;
+        }
+
+      }
+      `}</style>
       {sidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden no-print" onClick={() => setSidebarOpen(false)} />}
       <aside className={`fixed md:sticky top-0 left-0 z-30 h-screen w-64 bg-emerald-900 text-white transition-transform duration-300 no-print ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} flex flex-col`}>
         <div className="p-6 border-b border-emerald-800 text-center bg-emerald-950">
@@ -383,7 +453,7 @@ function KelolaMapelView() {
           return (
             <div key={kelasStr} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="bg-gray-50 border-b border-gray-200 px-5 py-3 flex justify-between items-center shadow-sm"><h4 className="font-bold text-gray-800 text-lg">{kelasStr}</h4></div>
-              <div className="overflow-x-auto w-full">
+              <div className="overflow-x-auto w-full"> 
                 <table className="w-full text-sm text-left text-gray-600 min-w-[700px]">
                   <thead className="text-xs text-gray-500 uppercase border-b bg-gray-50"><tr><th className="px-5 py-3 w-1/4">Mata Pelajaran</th><th className="px-5 py-3 text-center">Status Teks MD</th><th className="px-5 py-3 text-center">Link PDF Asli</th><th className="px-5 py-3 text-center">Aksi</th></tr></thead>
                   <tbody className="divide-y divide-gray-100">
@@ -432,32 +502,111 @@ function KelolaMapelView() {
 
 // --- FUNGSI GLOBAL PEMANGGILAN API OPENROUTER ---
 async function callOpenRouterAI(prompt, modelId) {
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": window.location.origin, 
-        "X-Title": "PKBM Question Generator" 
-      },
-      body: JSON.stringify({
-        model: modelId,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
+  const requestedModel = modelId || OPENROUTER_MODELS[0].id;
+  const fallbackModels = OPENROUTER_MODELS
+    .map(model => model.id)
+    .filter(id => id !== requestedModel);
+  const modelsToTry = [requestedModel, ...fallbackModels];
+  const errors = [];
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || `HTTP Error ${response.status}`);
+  for (const currentModel of modelsToTry) {
+    try {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": window.location.origin,
+          "X-Title": "PKBM Question Generator"
+        },
+        body: JSON.stringify({
+          model: currentModel,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP Error ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (jsonError) {
+          errorMessage = response.statusText || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      errors.push(`${currentModel}: ${error.message}`);
+    }
+  }
+
+  throw new Error("Semua model free gagal dicoba. " + errors.join(" | "));
+}
+
+// --- FUNGSI BANTU: PARSER JSON DARI OUTPUT AI ---
+function extractBalancedJson(text) {
+  const cleaned = String(text || "")
+    .replace(/\uFEFF/g, "")
+    .replace(/\`\`\`json/gi, "")
+    .replace(/\`\`\`/g, "")
+    .trim();
+
+  const firstObject = cleaned.indexOf("{");
+  const firstArray = cleaned.indexOf("[");
+  const starts = [firstObject, firstArray].filter(index => index >= 0);
+
+  if (starts.length === 0) {
+    throw new Error("Output AI tidak berisi objek atau array JSON.");
+  }
+
+  const start = Math.min(...starts);
+  const opening = cleaned[start];
+  const closing = opening === "{" ? "}" : "]";
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < cleaned.length; i++) {
+    const char = cleaned[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
     }
 
-    const data = await response.json();
-    return data.choices[0].message.content;
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
 
-  } catch (error) {
-    throw new Error("Koneksi API Gagal: " + error.message);
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (char === opening) depth++;
+    if (char === closing) depth--;
+
+    if (depth === 0) {
+      return cleaned.slice(start, i + 1);
+    }
   }
+
+  throw new Error("JSON dari AI terpotong sebelum penutup akhir.");
+}
+
+function parseAiJsonResponse(text) {
+  const jsonText = extractBalancedJson(text)
+    .replace(/,\s*([}\]])/g, "$1")
+    .replace(/[\u0000-\u001F]+/g, " ");
+
+  return JSON.parse(jsonText);
 }
 
 // --- KOMPONEN: RPP (PPM) GENERATOR ---
@@ -468,6 +617,15 @@ function RppGenerator({ lembaga }) {
   const [selectedModel, setSelectedModel] = useState(OPENROUTER_MODELS[0].id);
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState(null);
+  const [step2Result, setStep2Result] = useState(null);
+  const [isGeneratingStep2, setIsGeneratingStep2] = useState(false);
+
+  const rppPrintRef = useRef(null);
+
+  const handlePrintPDF = useReactToPrint({
+    contentRef: rppPrintRef,
+    documentTitle: result ? `RPP-${result.config.subject}` : "RPP",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -484,9 +642,16 @@ function RppGenerator({ lembaga }) {
   
   // PERBAIKAN: DPL sekarang menggunakan Array agar bisa memilih lebih dari satu
   const [formData, setFormData] = useState({ 
-    paket: 'Paket B', kelas: 'Kelas 8', subject: '', semesterType: 'Ganjil', 
-    topic: '', waktu: '8 x pertemuan (20 JP)', dpl: [] 
-  });
+  paket: 'Paket B',
+  kelas: 'Kelas 8',
+  subject: '',
+  semesterType: 'Ganjil',
+  topic: '',
+  jumlahPertemuan: '8',
+  jp: '20',
+  waktu: '8 x pertemuan (20 JP)',
+  dpl: []
+});
   
   const availableSubjects = [...new Set(mapelDB.filter(m => m.paket === formData.paket && m.kelas === formData.kelas).map(m => m.subject))];
   const selectedTutor = tutorsList.find(t => t.id === selectedTutorId) || { name: 'Pilih Tutor', nip: '-', ttdUrl: '' };
@@ -503,7 +668,7 @@ function RppGenerator({ lembaga }) {
     if (!formData.subject || !formData.topic) { alert("Pilih Mapel dan isi Judul Bab Pembelajaran!"); return; }
     if (!selectedTutorId) { alert("Pilih Tutor Penyusun terlebih dahulu!"); return; }
     if (formData.dpl.length === 0) { alert("Mohon pilih setidaknya satu Dimensi Profil Lulusan (DPL)!"); return; }
-    if (!OPENROUTER_API_KEY) { alert("API KEY KOSONG!"); return; }
+    if (!API_KEY) { alert("API KEY KOSONG!"); return; }
     
     setIsGenerating(true); setResult(null);
     try {
@@ -514,52 +679,151 @@ function RppGenerator({ lembaga }) {
 
       const dplString = formData.dpl.join(", ");
       
-      const prompt = `Anda adalah ahli pembuat RPP/PPM (Perencanaan Pembelajaran Mendalam) untuk PKBM. Buat RPP berdasarkan teks berikut. 
-Mata Pelajaran: ${formData.subject}, Kelas: ${formData.kelas}.
+      const prompt = `
+Anda adalah ahli penyusun RPP/PPM PKBM profesional.
 
-PENTING (STRICT RULE): 
-1. Fokuskan RPP INI HANYA PADA MATERI DI BAB / TOPIK: "${formData.topic}". Abaikan bab lain yang ada di teks referensi di bawah ini.
-2. Terapkan Dimensi Profil Lulusan (DPL) berikut dalam aktivitas pembelajaran: ${dplString}. Pastikan langkah-langkah di kegiatan inti melatih keterampilan tersebut.
-3. HASIL WAJIB DALAM FORMAT JSON ARRAY/OBJECT MURNI tanpa blok kode markdown seperti \`\`\`json. Output harus langsung berwujud JSON seperti struktur ini (buat 2-3 pertemuan):
+TUGAS:
+Buat RPP lengkap berdasarkan data berikut.
+
+DATA:
+- Mata Pelajaran: ${formData.subject}
+- Kelas: ${formData.kelas}
+- Semester: ${formData.semesterType}
+- Topik: ${formData.topic}
+- Jumlah Pertemuan: ${formData.jumlahPertemuan}
+- Total JP: ${formData.jp}
+- DPL: ${dplString}
+
+ATURAN WAJIB:
+1. Fokus hanya pada topik "${formData.topic}"
+2. WAJIB membuat tepat ${formData.jumlahPertemuan} pertemuan
+3. Setiap pertemuan wajib memiliki:
+   - kegiatan_awal
+   - kegiatan_inti
+   - kegiatan_penutup
+   - refleksi
+   - lkpd
+   - rubrik_penilaian
+4. Gunakan bahasa formal dan realistis
+5. Output HARUS JSON VALID
+6. Jangan gunakan markdown
+7. Jangan gunakan penjelasan tambahan
+8. Jangan menulis selain JSON
+9. LKPD wajib dibuat lengkap pada setiap pertemuan
+10. Rubrik penilaian wajib dibuat pada setiap pertemuan
+11. Instrumen observasi wajib dibuat pada setiap pertemuan
+12. Semua array wajib terisi
+13. Jangan mengosongkan object
+14. lintas_disiplin wajib diisi
+15. media wajib minimal 3 item
+16. lkpd harus rinci dan panjang
+17. rubrik_penilaian harus lengkap
+18. setiap pertemuan minimal 5 kegiatan inti
+
+FORMAT JSON WAJIB:
+
 {
   "identifikasi": {
-    "murid": "Kondisi awal dan karakteristik murid terkait materi bab ini",
-    "materi": "Deskripsi singkat materi dari bab tersebut",
-    "dpl": "${dplString}"
+    "murid": "",
+    "materi": "",
+    "dpl": ""
   },
+
   "desain": {
-    "cp": "Capaian Pembelajaran spesifik materi ini",
-    "lintas_disiplin": "Keterkaitan dengan disiplin ilmu lain",
-    "tp": "Tujuan Pembelajaran utama bab ini",
-    "indikator": ["Indikator 1", "Indikator 2", "Indikator 3"],
-    "praktek": "Model, Strategi, dan Metode",
-    "kemitraan": "Kemitraan pembelajaran",
-    "lingkungan": "Ruang fisik dan virtual",
-    "digital": "Pemanfaatan digital",
-    "tugas": ["Tugas 1", "Tugas 2"]
-  },
+  "cp": "",
+  "lintas_disiplin": "",
+  "tp": "",
+  "indikator": [],
+  "model": "",
+  "media": [],
+  "kemitraan": "",
+  "lingkungan": "",
+  "digital": ""
+}
+
   "pertemuan": [
     {
       "ke": 1,
-      "durasi": "2 x 40 menit",
-      "awal": ["Langkah 1", "Langkah 2"],
-      "inti": ["Langkah inti 1 mencerminkan DPL", "Langkah inti 2"],
-      "penutup": ["Langkah penutup 1", "Langkah penutup 2"]
+
+      "durasi": "",
+
+      "kegiatan_awal": [],
+
+      "kegiatan_inti": [],
+
+      "kegiatan_penutup": [],
+
+      "refleksi_guru": [],
+
+      "lkpd": {
+        "judul": "",
+
+        "tujuan": "",
+
+        "petunjuk": [],
+
+        "langkah_kerja": [],
+
+        "tugas": [],
+
+        "pertanyaan_refleksi": []
+      },
+
+      "rubrik_penilaian": [
+        {
+          "aspek": "",
+          "kriteria": "",
+          "skor_1": "",
+          "skor_2": "",
+          "skor_3": "",
+          "skor_4": ""
+        }
+      ],
+
+      "observasi": {
+        "sikap": [],
+        "keterampilan": [],
+        "catatan": []
+      }
     }
   ],
+
   "asesmen": {
-    "awal": "Deskripsi asesmen awal",
-    "proses": "Deskripsi asesmen formatif",
-    "akhir": "Deskripsi asesmen sumatif"
+    "awal": "",
+    "formatif": "",
+    "sumatif": ""
+  },
+
+  "lampiran": {
+  "bahan_bacaan": [],
+  "media_pembelajaran": [],
+  "glosarium": [],
+  "daftar_pustaka": []
   }
+
 }
 
-TEKS MATERI KESELURUHAN (Cari hanya Bab: ${formData.topic}):
-${contextText.substring(0, 15000)}`;
+REFERENSI:
+${contextText.substring(0, 15000)}
+`;
 
-      let responseText = await callOpenRouterAI(prompt, selectedModel);
-      responseText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const generatedJSON = JSON.parse(responseText);
+      const responseText = await callOpenRouterAI(prompt, selectedModel);
+      let generatedJSON;
+
+      try {
+        generatedJSON = parseAiJsonResponse(responseText);
+      } catch (err) {
+        console.error("Output AI mentah:", responseText);
+        console.error("Kesalahan parse JSON:", err);
+
+        alert(
+          "AI belum menghasilkan JSON yang bisa dibaca.\n\n" +
+          "Biasanya karena jawaban AI terpotong atau formatnya rusak. " +
+          "Coba kurangi jumlah pertemuan / JP, pilih model lain, lalu generate ulang."
+        );
+
+        return;
+      }
       
       setResult({ config: formData, data: generatedJSON, tutor: selectedTutor });
     } catch (error) {
@@ -615,8 +879,8 @@ ${contextText.substring(0, 15000)}`;
             </div>
 
             <div className="flex space-x-4 bg-amber-50 p-2 rounded-lg border border-amber-200">
-              <label className="text-xs font-medium text-amber-900 flex items-center cursor-pointer"><input type="radio" checked={formData.semesterType === 'Ganjil'} onChange={() => setFormData({...formData, semesterType: 'Ganjil'})} className="mr-1.5" /> File Smt Ganjil</label>
-              <label className="text-xs font-medium text-amber-900 flex items-center cursor-pointer"><input type="radio" checked={formData.semesterType === 'Genap'} onChange={() => setFormData({...formData, semesterType: 'Genap'})} className="mr-1.5" /> File Smt Genap</label>
+              <label className="text-xs font-medium text-amber-900 flex items-center cursor-pointer"><input type="radio" checked={formData.semesterType === 'Ganjil'} onChange={() => setFormData({...formData, semesterType: 'Ganjil'})} className="mr-1.5" /> Semester Ganjil</label>
+              <label className="text-xs font-medium text-amber-900 flex items-center cursor-pointer"><input type="radio" checked={formData.semesterType === 'Genap'} onChange={() => setFormData({...formData, semesterType: 'Genap'})} className="mr-1.5" /> Semester Genap</label>
             </div>
           </div>
 
@@ -630,9 +894,48 @@ ${contextText.substring(0, 15000)}`;
               <p className="text-[10px] text-gray-500 mt-1">AI hanya akan membaca dan merangkum RPP khusus untuk Judul Bab yang Anda ketik di atas.</p>
             </div>
             
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">Alokasi Waktu Keseluruhan</label>
-              <input type="text" required placeholder="Contoh: 8 x pertemuan (20 JP)" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white" value={formData.waktu} onChange={(e) => setFormData({...formData, waktu: e.target.value})} />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Jumlah Pertemuan
+                </label>
+
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Contoh: 3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  value={formData.jumlahPertemuan}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      jumlahPertemuan: e.target.value,
+                      waktu: `${e.target.value} x pertemuan (${formData.jp} JP)`
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Total JP
+                </label>
+
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Contoh: 9"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  value={formData.jp}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      jp: e.target.value,
+                      waktu: `${formData.jumlahPertemuan} x pertemuan (${e.target.value} JP)`
+                    })
+                  }
+                />
+              </div>
             </div>
             
             <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
@@ -650,20 +953,47 @@ ${contextText.substring(0, 15000)}`;
               </div>
             </div>
           </div>
-          <button type="submit" disabled={isGenerating} className={`md:col-span-2 w-full font-bold py-3.5 rounded-xl text-sm transition-all shadow-sm ${isGenerating ? 'bg-emerald-200 text-emerald-800 cursor-wait' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md active:translate-y-1'}`}>
-            {isGenerating ? 'AI Sedang Merumuskan RPP Per Bab...' : 'Generate RPP (PPM)'}
-          </button>
+       
+          <button
+              type="submit"
+              disabled={isGenerating}
+              className={`md:col-span-2 w-full font-bold py-3.5 rounded-xl text-sm transition-all shadow-sm ${
+                isGenerating
+                  ? 'bg-emerald-200 text-emerald-800 cursor-wait'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md active:translate-y-1'
+              }`}
+            >
+              {isGenerating
+                ? 'AI Sedang Membuat RPP...'
+                : 'Generate'}
+            </button>
         </form>
       </div>
 
       {result && (
         <div className="bg-white shadow-xl border border-gray-300 animate-in fade-in duration-500 relative">
           <div className="bg-gray-100 p-4 border-b flex justify-between items-center no-print">
-            <div className="text-sm font-bold text-gray-700 flex items-center"><Pencil className="w-4 h-4 mr-2" /> Live Edit Aktif (Klik teks untuk merubah)</div>
-            <button onClick={() => window.print()} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-5 py-2 rounded-md flex items-center shadow-sm"><Download className="w-4 h-4 mr-1.5" /> Print RPP / PDF</button>
+  
+            <div className="text-sm font-bold text-gray-700 flex items-center">
+              <Pencil className="w-4 h-4 mr-2" />
+              Dokumen RPP Siap Export & Cetak
+            </div>
+
+            <div className="flex gap-2">
+
+              <button
+                onClick={handlePrintPDF}
+                className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-5 py-2 rounded-md flex items-center shadow-sm"
+              >
+                <Download className="w-4 h-4 mr-1.5" />
+                Simpan / Cetak PDF
+              </button>
+
+            </div>
+
           </div>
 
-          <div className="printable-area p-10 font-serif text-[13px] leading-relaxed text-black bg-white text-left mx-auto max-w-[800px]">
+          <div id="rpp-print-area" ref={rppPrintRef} className="printable-area p-[15mm] font-sans text-[13px] leading-relaxed text-black bg-white text-left">
             {/* IDENTITAS */}
             <h2 className="text-center font-bold text-lg mb-6 underline">PERENCANAAN PEMBELAJARAN MENDALAM (PPM)</h2>
             <table className="w-full mb-6 font-medium">
@@ -672,8 +1002,8 @@ ${contextText.substring(0, 15000)}`;
                 <tr><td className="py-1">Nama Tutor</td><td>: {result.tutor.name}</td></tr>
                 <tr><td className="py-1">Mata Pelajaran</td><td>: {result.config.subject}</td></tr>
                 <tr><td className="py-1">Fase/Kelas/Smt</td><td>: {result.config.kelas} / {result.config.semesterType}</td></tr>
-                <tr><td className="py-1">Alokasi Waktu</td><td>: <span contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-100">{result.config.waktu}</span></td></tr>
-                <tr><td className="py-1">Judul Bab / Topik</td><td>: <span contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-100 font-bold uppercase">{result.config.topic}</span></td></tr>
+                <tr><td className="py-1">Alokasi Waktu</td><td>: <span className="outline-emerald-300 hover:bg-gray-100">{result.config.waktu}</span></td></tr>
+                <tr><td className="py-1">Judul Bab / Topik</td><td>: <span className="outline-emerald-300 hover:bg-gray-100 font-bold uppercase">{result.config.topic}</span></td></tr>
               </tbody>
             </table>
 
@@ -682,49 +1012,114 @@ ${contextText.substring(0, 15000)}`;
             <div className="pl-4 space-y-3">
               <div>
                 <strong>1. Murid:</strong><br/>
-                <div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.identifikasi.murid}</div>
+                <div className="outline-emerald-300 hover:bg-gray-50">{result.data.identifikasi.murid}</div>
               </div>
               <div>
                 <strong>2. Materi Pembelajaran:</strong><br/>
-                <div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.identifikasi.materi}</div>
+                <div className="outline-emerald-300 hover:bg-gray-50">{result.data.identifikasi.materi}</div>
               </div>
               <div>
                 <strong>3. Dimensi Profil Lulusan (DPL):</strong><br/>
-                <div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50 font-bold">{result.data.identifikasi.dpl}</div>
+                <div className="outline-emerald-300 hover:bg-gray-50 font-bold">{result.data.identifikasi.dpl}</div>
               </div>
             </div>
 
             {/* II. DESAIN PEMBELAJARAN */}
             <h3 className="font-bold text-[14px] mt-8 mb-2">II. DESAIN PEMBELAJARAN</h3>
             <div className="pl-4 space-y-3">
-              <div><strong>1. Capaian Pembelajaran:</strong><div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.cp}</div></div>
-              <div><strong>2. Lintas Disiplin Ilmu:</strong><div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.lintas_disiplin}</div></div>
-              <div><strong>3. Tujuan Pembelajaran:</strong><div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.tp}</div>
+              <div><strong>1. Capaian Pembelajaran:</strong><div className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.cp}</div></div>
+              <div><strong>2. Lintas Disiplin Ilmu:</strong><div className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.lintas_disiplin}</div></div>
+              <div><strong>3. Tujuan Pembelajaran:</strong><div className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.tp}</div>
                 <div className="mt-1"><strong>Indikator:</strong>
                   <ul className="list-disc pl-5 mt-1">
-                    {result.data.desain.indikator.map((ind, i) => <li key={i} contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{ind}</li>)}
+                    {result.data.desain.indikator?.map((ind, i) => <li key={i} className="outline-emerald-300 hover:bg-gray-50">{ind}</li>)}
                   </ul>
                 </div>
               </div>
-              <div><strong>4. Praktek Pedagogis:</strong><div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.praktek}</div></div>
-              <div><strong>5. Kemitraan & Lingkungan:</strong><div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.kemitraan} | {result.data.desain.lingkungan}</div></div>
-              <div><strong>6. Pemanfaatan Digital:</strong><div contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.digital}</div></div>
-              <div><strong>7. Tugas Ko Kurikuler:</strong>
-                <ul className="list-disc pl-5 mt-1">
-                  {result.data.desain.tugas.map((t, i) => <li key={i} contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{t}</li>)}
-                </ul>
+              <div><strong>4. Praktek Pedagogis:</strong><div className="outline-emerald-300 hover:bg-gray-50">{result.data.desain.model}</div></div>
+              <div>
+                <strong>5. Kemitraan Pembelajaran:</strong>
+
+                <div className="outline-emerald-300 hover:bg-gray-50">
+                  {result.data.desain.kemitraan}
+                </div>
+              </div>
+
+              <div>
+                <strong>6. Lingkungan Pembelajaran:</strong>
+
+                <div className="outline-emerald-300 hover:bg-gray-50">
+                  {result.data.desain.lingkungan}
+                </div>
+              </div>
+
+              <div>
+                <strong>7. Media Pembelajaran:</strong>
+
+                <div className="outline-emerald-300 hover:bg-gray-50">
+                  {result.data.desain.media?.join(", ")}
+                </div>
+              </div>
+
+              <div>
+                <strong>8. Pemanfaatan Digital:</strong>
+
+                <div className="outline-emerald-300 hover:bg-gray-50">
+                  {result.data.desain.digital}
+                </div>
               </div>
             </div>
 
             {/* III. PENGALAMAN BELAJAR */}
             <h3 className="font-bold text-[14px] mt-8 mb-4">III. PENGALAMAN BELAJAR</h3>
             <div className="pl-4 space-y-6">
-              {result.data.pertemuan.map((p, i) => (
+              {result.data.pertemuan?.map((p, i) => (
                 <div key={i} className="border border-gray-300 p-4 rounded-lg bg-gray-50/50">
                   <h4 className="font-bold border-b border-gray-300 pb-1 mb-2">Pertemuan {p.ke} ({p.durasi})</h4>
-                  <div className="mb-2"><strong>Kegiatan Awal:</strong><ul className="list-disc pl-5 mt-1">{p.awal.map((x, j) => <li key={j} contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-100">{x}</li>)}</ul></div>
-                  <div className="mb-2"><strong>Kegiatan Inti:</strong><ul className="list-disc pl-5 mt-1">{p.inti.map((x, j) => <li key={j} contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-100">{x}</li>)}</ul></div>
-                  <div><strong>Kegiatan Penutup:</strong><ul className="list-disc pl-5 mt-1">{p.penutup.map((x, j) => <li key={j} contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-100">{x}</li>)}</ul></div>
+                  <div className="mb-2">
+                    <strong>Kegiatan Awal:</strong>
+
+                    <ul className="list-disc pl-5 mt-1">
+                      {p.kegiatan_awal?.map((x, j) => (
+                        <li
+                          key={j}
+                          className="outline-emerald-300 hover:bg-gray-100"
+                        >
+                          {x}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mb-2">
+                    <strong>Kegiatan Inti:</strong>
+
+                    <ul className="list-disc pl-5 mt-1">
+                      {p.kegiatan_inti?.map((x, j) => (
+                        <li
+                          key={j}
+                          className="outline-emerald-300 hover:bg-gray-100"
+                        >
+                          {x}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <strong>Kegiatan Penutup:</strong>
+
+                    <ul className="list-disc pl-5 mt-1">
+                      {p.kegiatan_penutup?.map((x, j) => (
+                        <li
+                          key={j}
+                          className="outline-emerald-300 hover:bg-gray-100"
+                        >
+                          {x}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               ))}
             </div>
@@ -732,9 +1127,9 @@ ${contextText.substring(0, 15000)}`;
             {/* IV. ASESMEN */}
             <h3 className="font-bold text-[14px] mt-8 mb-2">IV. ASESMEN PEMBELAJARAN</h3>
             <div className="pl-4 space-y-2">
-              <div><strong>1. Asesmen Awal:</strong> <span contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.asesmen.awal}</span></div>
-              <div><strong>2. Asesmen Proses:</strong> <span contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.asesmen.proses}</span></div>
-              <div><strong>3. Asesmen Akhir:</strong> <span contentEditable suppressContentEditableWarning className="outline-emerald-300 hover:bg-gray-50">{result.data.asesmen.akhir}</span></div>
+              <div><strong>1. Asesmen Awal:</strong> <span className="outline-emerald-300 hover:bg-gray-50">{result.data.asesmen.awal}</span></div>
+              <div><strong>2. Asesmen Proses:</strong> <span className="outline-emerald-300 hover:bg-gray-50">{result.data.asesmen.formatif}</span></div>
+              <div><strong>3. Asesmen Akhir:</strong> <span className="outline-emerald-300 hover:bg-gray-50">{result.data.asesmen.sumatif}</span></div>
             </div>
 
             {/* TANDA TANGAN */}
@@ -761,7 +1156,184 @@ ${contextText.substring(0, 15000)}`;
               </div>
             </div>
 
+            <div className="page-break"></div>
+
+            {/* ======================= LKPD ======================= */}
+
+            <div className="page-break"></div>
+
+            <div className="mt-10">
+              <h2 className="text-center text-2xl font-bold mb-10">
+                LAMPIRAN LKPD
+              </h2>
+
+              {result.data.pertemuan?.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="mb-16 border border-gray-400 p-6 rounded-lg avoid-break"
+                >
+
+                  <h3 className="text-xl font-bold mb-4 border-b pb-2">
+                    LKPD PERTEMUAN {item.ke}
+                  </h3>
+
+                  <div className="space-y-4 text-[13px]">
+
+                    <div>
+                      <strong>Judul LKPD:</strong>
+                      <div className="mt-1">
+                        {item.lkpd?.judul}
+                      </div>
+                    </div>
+
+                    <div>
+                      <strong>Tujuan Pembelajaran:</strong>
+                      <div className="mt-1">
+                        {item.lkpd?.tujuan}
+                      </div>
+                    </div>
+
+                    <div>
+                      <strong>Petunjuk Pengerjaan:</strong>
+
+                      <ul className="list-disc pl-6 mt-2 space-y-1">
+                        {item.lkpd?.petunjuk?.map((x, i) => (
+                          <li key={i}>{x}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <strong>Langkah Kerja:</strong>
+
+                      <ol className="list-decimal pl-6 mt-2 space-y-1">
+                        {item.lkpd?.langkah_kerja?.map((x, i) => (
+                          <li key={i}>{x}</li>
+                        ))}
+                      </ol>
+                    </div>
+
+                    <div>
+                      <strong>Tugas Peserta Didik:</strong>
+
+                      <ul className="list-disc pl-6 mt-2 space-y-1">
+                        {item.lkpd?.tugas?.map((x, i) => (
+                          <li key={i}>{x}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <strong>Jawaban Peserta Didik:</strong>
+
+                      <div className="border border-gray-400 mt-3 h-40 rounded"></div>
+                    </div>
+
+                    <div>
+                      <strong>Pertanyaan Refleksi:</strong>
+
+                      <ul className="list-disc pl-6 mt-2 space-y-1">
+                        {item.lkpd?.pertanyaan_refleksi?.map((x, i) => (
+                          <li key={i}>{x}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="page-break"></div>
+
+            {/* ======================= RUBRIK ======================= */}
+
+            <div className="page-break"></div>
+
+            <div className="mt-10">
+              <h2 className="text-center text-2xl font-bold mb-10">
+                RUBRIK PENILAIAN
+              </h2>
+
+              {result.data.pertemuan?.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="mb-16 avoid-break"
+                >
+
+                  <h3 className="text-xl font-bold mb-4">
+                    RUBRIK PERTEMUAN {item.ke}
+                  </h3>
+
+                  <table className="w-full border-collapse border border-black text-[12px]">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border border-black p-2">
+                          Aspek
+                        </th>
+
+                        <th className="border border-black p-2">
+                          Kriteria
+                        </th>
+
+                        <th className="border border-black p-2">
+                          Skor 1
+                        </th>
+
+                        <th className="border border-black p-2">
+                          Skor 2
+                        </th>
+
+                        <th className="border border-black p-2">
+                          Skor 3
+                        </th>
+
+                        <th className="border border-black p-2">
+                          Skor 4
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {item.rubrik_penilaian?.map((r, i) => (
+                        <tr key={i}>
+
+                          <td className="border border-black p-2 align-top">
+                            {r.aspek}
+                          </td>
+
+                          <td className="border border-black p-2 align-top">
+                            {r.kriteria}
+                          </td>
+
+                          <td className="border border-black p-2 align-top">
+                            {r.skor_1}
+                          </td>
+
+                          <td className="border border-black p-2 align-top">
+                            {r.skor_2}
+                          </td>
+
+                          <td className="border border-black p-2 align-top">
+                            {r.skor_3}
+                          </td>
+
+                          <td className="border border-black p-2 align-top">
+                            {r.skor_4}
+                          </td>
+
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                </div>
+              ))}
+            </div>
+
           </div>
+
+
         </div>
       )}
     </div>
@@ -776,7 +1348,7 @@ function AiGenerator({ lembaga }) {
   const [selectedModel, setSelectedModel] = useState(OPENROUTER_MODELS[0].id); 
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState(null);
-  const [activeTab, setActiveTab] = useState('soal'); 
+  const [activeTab, setActiveTab] = useState('soal');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -791,6 +1363,13 @@ function AiGenerator({ lembaga }) {
 
   const kelasOptionsDict = { 'Paket A': ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'], 'Paket B': ['Kelas 7', 'Kelas 8', 'Kelas 9'], 'Paket C': ['Kelas 10', 'Kelas 11', 'Kelas 12'] };
   const [formData, setFormData] = useState({ paket: 'Paket B', kelas: 'Kelas 8', subject: '', examType: 'SAS (Sumatif Akhir Semester)', semesterType: 'Ganjil', topic: '', count: '5' });
+
+  const kisiPrintRef = useRef(null);
+
+  const handlePrintPDF = useReactToPrint({
+    contentRef: kisiPrintRef,
+    documentTitle: formData.subject ? `Kisi-Kisi-${formData.subject}` : "Kisi-Kisi",
+  });
   const availableSubjects = [...new Set(mapelDB.filter(m => m.paket === formData.paket && m.kelas === formData.kelas).map(m => m.subject))];
 
   const selectedTutor = tutorsList.find(t => t.id === selectedTutorId) || { name: 'Pilih Tutor', nip: '-', ttdUrl: '' };
@@ -799,7 +1378,7 @@ function AiGenerator({ lembaga }) {
     e.preventDefault();
     if (!formData.subject) { alert("Pilih Mata Pelajaran!"); return; }
     if (!selectedTutorId) { alert("Pilih Tutor Penyusun terlebih dahulu!"); return; }
-    if (!OPENROUTER_API_KEY) { alert("API KEY KOSONG!"); return; }
+    if (!API_KEY) { alert("API KEY KOSONG!"); return; }
     
     setIsGenerating(true); setResult(null);
     const numOptions = formData.paket === 'Paket C' ? 5 : 4;
@@ -827,10 +1406,10 @@ PENTING: OUTPUT WAJIB FORMAT JSON ARRAY MURNI SEPERTI STRUKTUR DIBAWAH INI. Jang
 Format JSON: [{"no":1,"soal":"...","jawaban_benar":"Opsi A","pengecoh_1":"Opsi B","pengecoh_2":"Opsi C","pengecoh_3":"Opsi D",${numOptions===5?'"pengecoh_4":"Opsi E",':''}"bab":"Nama Bab","indikator":"Siswa mampu..."}]
 TEKS: ${contextText.substring(0, 15000)}`;
 
-      let responseText = await callOpenRouterAI(prompt, selectedModel);
-      responseText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const responseText = await callOpenRouterAI(prompt, selectedModel);
+      const generatedQuestions = parseAiJsonResponse(responseText);
       
-      setResult({ title: `${formData.examType} - ${formData.subject}`, cakupan: cakupanMateri, numOptions, tutor: selectedTutor, data: JSON.parse(responseText) });
+      setResult({ title: `${formData.examType} - ${formData.subject}`, cakupan: cakupanMateri, numOptions, tutor: selectedTutor, data: generatedQuestions });
     } catch (error) { alert("Generate Gagal!\n" + error.message); } finally { setIsGenerating(false); }
   };
 
@@ -918,12 +1497,32 @@ TEKS: ${contextText.substring(0, 15000)}`;
           <div className="bg-gray-50 p-4 border-b flex justify-between items-center no-print">
             <div className="flex space-x-1 bg-gray-200 p-1 rounded-lg">
               <button onClick={() => setActiveTab('soal')} className={`px-5 py-2 rounded-md text-xs font-bold ${activeTab === 'soal' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-600'}`}>1. Spreadsheet Soal</button>
-              <button onClick={() => setActiveTab('kisi')} className={`px-5 py-2 rounded-md text-xs font-bold ${activeTab === 'kisi' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-600'}`}>2. Cetak Kisi-kisi PDF</button>
+              <button onClick={() => setActiveTab('kisi')} className={`px-5 py-2 rounded-md text-xs font-bold ${activeTab === 'kisi' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-600'}`}>2. Download Kisi-kisi PDF</button>
             </div>
             {activeTab === 'soal' ? (
-              <button onClick={exportExcelColumn} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-md flex items-center shadow-sm"><FileSpreadsheet className="w-4 h-4 mr-1.5" /> Export Excel (.xls)</button>
+
+              <button
+                onClick={exportExcelColumn}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-md flex items-center shadow-sm"
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+                Export Excel (.xls)
+              </button>
+
             ) : (
-              <button onClick={() => window.print()} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-md flex items-center shadow-sm"><Download className="w-4 h-4 mr-1.5" /> Print PDF Rapi</button>
+
+              <div className="flex gap-2">
+
+                <button
+                  onClick={handlePrintPDF}
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-md flex items-center shadow-sm"
+                >
+                  <Download className="w-4 h-4 mr-1.5" />
+                  Simpan / Cetak PDF
+                </button>
+
+              </div>
+
             )}
           </div>
 
@@ -951,7 +1550,7 @@ TEKS: ${contextText.substring(0, 15000)}`;
           )}
 
           {activeTab === 'kisi' && (
-            <div id="printable-kisi" className="printable-area p-10 bg-white text-black font-serif w-full max-w-4xl mx-auto shadow-sm">
+            <div id="printable-kisi" ref={kisiPrintRef} className="printable-area p-10 bg-white text-black font-serif w-full max-w-4xl mx-auto shadow-sm">
               <div className="text-center mb-6">
                 <h3 className="text-base font-bold uppercase tracking-wide">KISI-KISI PENULISAN SOAL EVALUASI</h3>
                 <h4 className="text-sm font-bold uppercase mt-1">PKBM AL BARAKAH</h4>
