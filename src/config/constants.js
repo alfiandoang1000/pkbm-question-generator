@@ -3,12 +3,12 @@ export const LOGO_URL = "/ms-icon-150x150.png";
 // DAFTAR MODEL AI DARI GOOGLE GEMINI
 export const GEMINI_MODELS = [
   {
-    id: 'gemini-1.5-flash',
-    label: 'Gemini 1.5 Flash (Sangat Cepat & Gratis)'
+    id: 'gemini-3.5-flash',
+    label: 'Gemini 3.5 Flash (Sangat Cepat & Gratis)'
   },
   {
-    id: 'gemini-1.5-pro',
-    label: 'Gemini 1.5 Pro (Lebih Pintar & Akurat)'
+    id: 'gemini-3.1-pro-review',
+    label: 'Gemini 3.1 Pro (Lebih Pintar & Akurat)'
   }
 ];
 
