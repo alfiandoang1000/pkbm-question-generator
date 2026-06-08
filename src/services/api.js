@@ -13,13 +13,13 @@ let currentKeyIndex = 0;
  * @param {string} modelId The Gemini model name
  */
 const MODEL_MAP = {
-  'gemini-1.5-flash-latest': 'gemini-1.5-flash',
-  'gemini-1.5-pro-latest': 'gemini-1.5-pro',
-  'gemini-1.5-flash': 'gemini-1.5-flash',
-  'gemini-1.5-pro': 'gemini-1.5-pro',
+  'gemini-3.5-flash-latest': 'gemini-3.5-flash',
+  'gemini-3.1-flash-lite-latest': 'gemini-3.1-flash-lite',
+  'gemini-3.1-pro-preview-latest': 'gemini-3.1-pro-preview',
+  'gemini-3-flash-preview-latest': 'gemini-3-flash-preview',
 };
 
-export async function callGeminiAI(prompt, modelId = "gemini-1.5-flash") {
+export async function callGeminiAI(prompt, modelId = "gemini-3.5-flash") {
   if (API_KEYS.length === 0) {
     throw new Error("API Key Gemini belum dikonfigurasi! Harap lengkapi VITE_GEMINI_API_KEYS di file .env.");
   }
