@@ -1,0 +1,17 @@
+{
+  "short_name": "RPP & Soal",
+  "name": "RPP & Soal Generator PKBM",
+  "description": "Generator RPP dan Soal berbasis AI untuk Tutor PKBM Al Barakah",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#064e3b",
+  "theme_color": "#064e3b",
+  "display": "standalone",
+  "orientation": "portrait"
+}

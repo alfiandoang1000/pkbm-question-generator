@@ -1,1 +1,96 @@
 @import "tailwindcss";
+
+/* --- LAYOUT PRINT / PDF CONFIG --- */
+@page {
+  size: A4;
+  margin: 15mm;
+}
+
+.printable-area {
+  width: 210mm;
+  min-height: 297mm;
+  margin: auto;
+  background: white;
+  color: black;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.page-break {
+  page-break-before: always;
+}
+
+.avoid-break {
+  page-break-inside: avoid;
+}
+
+@media print {
+  html,
+  body {
+    background: white !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .printable-area {
+    width: 210mm;
+    padding: 15mm;
+    margin: 0 auto;
+    box-sizing: border-box;
+    background: white !important;
+  }
+
+  /* PERBAIKAN UTAMA: MENCABUT BATASAN LAYOUT TAILWIND AGAR BISA HALAMAN GANDA */
+  html, body, #root, .min-h-screen, main, .overflow-hidden, .overflow-y-auto {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    display: block !important;
+  }
+}
+
+/* --- CUSTOM SCROLLBAR --- */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.2);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.4);
+}
+
+/* --- KEYFRAME ANIMATIONS --- */
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
